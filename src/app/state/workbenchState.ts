@@ -5,11 +5,15 @@ import type { Dataset, PromptVariant } from "../../core/types.ts"
 
 export type VariantSlot = "A" | "B"
 export type ProviderMode = "demo" | "ollama"
+export type VariantPair = Record<VariantSlot, PromptVariant>
 
 export type WorkbenchState = {
   presetId: string
   dataset: Dataset
-  variants: Record<VariantSlot, PromptVariant>
+  /** 현재 preset의 Prompt A / B */
+  variants: VariantPair
+  /** 다른 preset으로 전환해도 편집본을 잃지 않도록 preset별 편집본을 보관 */
+  drafts: Record<string, VariantPair>
   providerMode: ProviderMode
   ollamaModel: string
   faultSimulation: boolean
@@ -25,13 +29,16 @@ export type WorkbenchAction =
   | { type: "setOllamaModel"; model: string }
   | { type: "openCase"; caseId: string }
   | { type: "closeCase" }
-  | { type: "restore"; state: Partial<Pick<WorkbenchState, "presetId" | "variants" | "providerMode" | "ollamaModel">> }
+  | {
+      type: "restore"
+      state: { presetId?: string; providerMode?: ProviderMode; ollamaModel?: string; drafts?: Record<string, VariantPair> }
+    }
 
 export function findPreset(presetId: string): Preset {
   return PRESETS.find((p) => p.id === presetId) ?? PRESETS[0]
 }
 
-function presetVariants(preset: Preset): Record<VariantSlot, PromptVariant> {
+function presetVariants(preset: Preset): VariantPair {
   return { A: structuredClone(preset.variantA), B: structuredClone(preset.variantB) }
 }
 
@@ -41,24 +48,37 @@ export function createInitialWorkbenchState(presetId: string = PRESETS[0].id): W
     presetId: preset.id,
     dataset: structuredClone(preset.dataset),
     variants: presetVariants(preset),
+    drafts: {},
     providerMode: "demo",
     ollamaModel: "",
     faultSimulation: false,
   }
 }
 
+function withVariants(state: WorkbenchState, variants: VariantPair): WorkbenchState {
+  return { ...state, variants, drafts: { ...state.drafts, [state.presetId]: variants } }
+}
+
 export function workbenchReducer(state: WorkbenchState, action: WorkbenchAction): WorkbenchState {
   switch (action.type) {
     case "selectPreset": {
       const preset = findPreset(action.presetId)
-      return { ...state, presetId: preset.id, dataset: structuredClone(preset.dataset), variants: presetVariants(preset), selectedCaseId: undefined }
+      const drafts = { ...state.drafts, [state.presetId]: state.variants }
+      return {
+        ...state,
+        presetId: preset.id,
+        dataset: structuredClone(preset.dataset),
+        variants: drafts[preset.id] ?? presetVariants(preset),
+        drafts,
+        selectedCaseId: undefined,
+      }
     }
     case "editVariant":
-      return { ...state, variants: { ...state.variants, [action.slot]: { ...state.variants[action.slot], ...action.patch } } }
+      return withVariants(state, { ...state.variants, [action.slot]: { ...state.variants[action.slot], ...action.patch } })
     case "resetVariant": {
       const preset = findPreset(state.presetId)
       const original = action.slot === "A" ? preset.variantA : preset.variantB
-      return { ...state, variants: { ...state.variants, [action.slot]: structuredClone(original) } }
+      return withVariants(state, { ...state.variants, [action.slot]: structuredClone(original) })
     }
     case "setFaultSimulation":
       return { ...state, faultSimulation: action.enabled }
@@ -72,11 +92,16 @@ export function workbenchReducer(state: WorkbenchState, action: WorkbenchAction)
       return { ...state, selectedCaseId: undefined }
     case "restore": {
       const preset = findPreset(action.state.presetId ?? state.presetId)
+      const drafts = { ...state.drafts, ...action.state.drafts }
       return {
         ...state,
-        ...action.state,
+        providerMode: action.state.providerMode ?? state.providerMode,
+        ollamaModel: action.state.ollamaModel ?? state.ollamaModel,
         presetId: preset.id,
         dataset: structuredClone(preset.dataset),
+        variants: drafts[preset.id] ?? presetVariants(preset),
+        drafts,
+        faultSimulation: (action.state.providerMode ?? state.providerMode) === "demo" ? state.faultSimulation : false,
       }
     }
   }

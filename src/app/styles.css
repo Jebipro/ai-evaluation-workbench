@@ -830,3 +830,113 @@ summary {
     scroll-behavior: auto !important;
   }
 }
+
+/* ------------------------------------------------------------------ history / export */
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--focus);
+  padding: 6px 12px;
+  border-radius: 6px;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  left: 16px;
+}
+
+.column-results:focus {
+  outline: none;
+}
+
+.run-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+}
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.history-item {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.history-list li.is-current .history-item {
+  border-color: var(--focus);
+  background: var(--surface-muted);
+}
+
+.history-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.history-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.history-status {
+  font-size: 0.75rem;
+  border-radius: 4px;
+  padding: 0 6px;
+  background: var(--neutral-soft);
+  white-space: nowrap;
+}
+
+.history-status-completed {
+  background: var(--pass-soft);
+  color: var(--pass);
+}
+
+.history-status-partiallyFailed {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.history-status-failed {
+  background: var(--fail-soft);
+  color: var(--fail);
+}
+
+.empty-history {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.health {
+  margin-top: 8px;
+  font-size: 0.85rem;
+}

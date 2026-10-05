@@ -2,6 +2,7 @@ import { useId } from "react"
 import { PRESETS } from "../../core/presets.ts"
 import { DEMO_MODEL } from "../../core/providers/demo.ts"
 import type { WorkbenchAction, WorkbenchState } from "../state/workbenchState.ts"
+import { OllamaStatus } from "./OllamaStatus.tsx"
 import { PromptEditor } from "./PromptEditor.tsx"
 
 type Props = {
@@ -72,10 +73,13 @@ export function SetupPanel({ state, dispatch, disabled }: Props) {
           )}
         </div>
         {state.providerMode === "ollama" && (
-          <p className="hint">
-            <code>npm run server</code>로 local server를 띄우고 Ollama가 실행 중이어야 합니다. temperature 0, seed 42로
-            요청합니다 (완전한 결정성은 보장되지 않음).
-          </p>
+          <>
+            <p className="hint">
+              <code>npm run server</code>로 local server를 띄우고 Ollama가 실행 중이어야 합니다. temperature 0, seed 42로
+              요청합니다 (완전한 결정성은 보장되지 않음). latency는 브라우저 Runner가 측정합니다.
+            </p>
+            <OllamaStatus onPickModel={(model) => dispatch({ type: "setOllamaModel", model })} />
+          </>
         )}
         {state.providerMode === "demo" && (
           <div className="fault-toggle">

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # server는 Node의 TypeScript type stripping으로 .ts를 바로 실행한다 (로컬 검증: Node 24)
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

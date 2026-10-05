@@ -1,5 +1,7 @@
 # AI Evaluation Workbench
 
+[![CI](https://github.com/Jebipro/ai-evaluation-workbench/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jebipro/ai-evaluation-workbench/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/Jebipro/ai-evaluation-workbench)](LICENSE)
 [![GitHub repo](https://img.shields.io/badge/GitHub-Jebipro%2Fai--evaluation--workbench-181717?logo=github)](https://github.com/Jebipro/ai-evaluation-workbench)
 [![Last commit](https://img.shields.io/github/last-commit/Jebipro/ai-evaluation-workbench)](https://github.com/Jebipro/ai-evaluation-workbench/commits/main)
 [![Top language](https://img.shields.io/github/languages/top/Jebipro/ai-evaluation-workbench)](https://github.com/Jebipro/ai-evaluation-workbench)
@@ -299,3 +301,11 @@ fixtures/          Ollama 응답 fixture
 ## AI 사용 고지
 
 이 프로젝트는 Anthropic의 Claude(Claude Code)를 이용해 설계·구현·테스트·문서화했습니다. 설계 요구사항은 사람이 작성한 지시문을 따랐습니다.
+
+## CI
+
+[GitHub Actions](https://github.com/Jebipro/ai-evaluation-workbench/actions/workflows/ci.yml) (`.github/workflows/ci.yml`)가 `main` push와 pull request마다 Node 24에서 `npm ci → typecheck → test → build`를 실행합니다. CI에는 Ollama가 없으므로 실제 모델 run은 포함되지 않고, Ollama 관련 검증은 실측 fixture와 가짜 upstream server 테스트로 수행합니다.
+
+## License
+
+[MIT](LICENSE)

@@ -13,7 +13,8 @@
 
 **Repository:** https://github.com/Jebipro/ai-evaluation-workbench
 
-> "Prompt A와 Prompt B 중 무엇이 더 좋은가?"를 감이 아니라 **반복 가능한 test set과 deterministic 평가 결과**로 비교하는 작은 도구.
+> "Prompt A와 Prompt B 중 무엇이 더 좋은가?"를 감이 아니라 **반복 가능한 test set과 deterministic evaluator**로 비교하는 작은 도구.
+> 같은 output에는 항상 같은 점수를 매기지만, LLM output 자체는 temperature 0 + 고정 seed에서도 run마다 달라질 수 있습니다 ([실측 결과](#실제-ollama-검증-결과)).
 
 여러 Prompt / 설정(variant)을 같은 Test Dataset에 실행하고, case별 결과와 실패 원인을 나란히 비교합니다. 내부 데이터 모델은 N개의 variant를 지원하고, UI는 A/B 두 variant 비교에 집중합니다.
 
@@ -300,7 +301,9 @@ fixtures/          Ollama 응답 fixture
 
 ## AI 사용 고지
 
-이 프로젝트는 Anthropic의 Claude(Claude Code)를 이용해 설계·구현·테스트·문서화했습니다. 설계 요구사항은 사람이 작성한 지시문을 따랐습니다.
+이 프로젝트는 Anthropic의 Claude(Claude Code)를 설계 보조, 구현, 테스트 작성, 문서화에 활용했습니다. 코드, 테스트, README의 대부분은 Claude Code가 작성했습니다.
+
+프로젝트 범위, 요구사항, 평가 기준(evaluator semantics, FAIL vs ERROR 구분 등), 검증 방향(실제 Ollama 검증 여부, 사용할 환경 등), 그리고 결과물의 채택 여부는 프로젝트 작성자가 결정했습니다. Claude Code는 이 결정에 따라 작업했고, 작업 결과는 작성자의 검토를 거쳐 채택되었습니다.
 
 ## CI
 

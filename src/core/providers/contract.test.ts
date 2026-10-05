@@ -113,6 +113,26 @@ for (const subject of subjects) {
   })
 }
 
+describe("ProxyProvider error metadata", () => {
+  it("server가 정규화한 network 오류에는 local server의 502를 httpStatus로 붙이지 않는다", async () => {
+    const provider = new ProxyProvider({
+      fetch: async () => jsonResponse({ error: { kind: "network", message: "Ollama에 연결할 수 없습니다" } }, 502),
+    })
+    const error = await provider.run(request, { signal: new AbortController().signal }).catch((e: ProviderError) => e)
+    expect(error).toMatchObject({ kind: "network", httpStatus: undefined })
+  })
+
+  it("upstream status는 그대로 전달한다", async () => {
+    const provider = new ProxyProvider({
+      fetch: async () => jsonResponse({ error: { kind: "http_4xx", message: "model not found", httpStatus: 404 } }, 502),
+    })
+    await expect(provider.run(request, { signal: new AbortController().signal })).rejects.toMatchObject({
+      kind: "http_4xx",
+      httpStatus: 404,
+    })
+  })
+})
+
 describe("Ollama fixture normalizer", () => {
   it("fixture 출처가 명시되어 있다", () => {
     expect(typeof fixture._source).toBe("string")

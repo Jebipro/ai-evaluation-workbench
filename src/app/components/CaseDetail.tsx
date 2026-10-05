@@ -27,6 +27,10 @@ function describeEvaluator(config: EvaluatorConfig): string {
   }
 }
 
+function isSimulated(raw: unknown): boolean {
+  return typeof raw === "object" && raw !== null && (raw as { simulated?: unknown }).simulated === true
+}
+
 function VariantResult({ slot, variant, testCase, result }: { slot: string; variant: PromptVariant; testCase: TestCase; result?: CaseResult }) {
   const renderedPrompt = result?.renderedPrompt ?? renderTemplate(variant.promptTemplate, testCase.input)
   return (
@@ -82,7 +86,10 @@ function VariantResult({ slot, variant, testCase, result }: { slot: string; vari
           <dt>reason</dt>
           <dd>{result.reason}</dd>
           <dt>latency</dt>
-          <dd>{formatMs(result.latencyMs)}</dd>
+          <dd>
+            {formatMs(result.latencyMs)}
+            {result.latencyMs === undefined && isSimulated(result.raw) && <span className="muted"> (simulated)</span>}
+          </dd>
           <dt>usage</dt>
           <dd>
             {result.usage

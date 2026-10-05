@@ -64,9 +64,12 @@ export class ProxyProvider implements ModelProvider {
     }
     if (!response.ok) {
       const error = (json as Partial<ProxyRunErrorBody>).error
-      const kind = isErrorKind(error?.kind) ? error.kind : httpStatusToErrorKind(response.status)
-      throw new ProviderError(kind, error?.message ?? `server HTTP ${response.status}`, {
-        httpStatus: error?.httpStatus ?? response.status,
+      if (isErrorKind(error?.kind)) {
+        // server가 정규화한 오류. httpStatus는 upstream(Ollama)의 status만 쓴다 (network / timeout이면 없음).
+        throw new ProviderError(error.kind, error.message ?? `server HTTP ${response.status}`, { httpStatus: error.httpStatus })
+      }
+      throw new ProviderError(httpStatusToErrorKind(response.status), `server HTTP ${response.status}`, {
+        httpStatus: response.status,
       })
     }
     const success = json as Partial<ProxyRunSuccessBody>

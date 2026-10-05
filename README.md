@@ -301,9 +301,9 @@ fixtures/          Ollama 응답 fixture
 
 ## AI 사용 고지
 
-이 프로젝트는 Anthropic의 Claude(Claude Code)를 설계 보조, 구현, 테스트 작성, 문서화에 활용했습니다. 코드, 테스트, README의 대부분은 Claude Code가 작성했습니다.
+이 프로젝트는 Anthropic의 Claude(Claude Code)를 설계 보조, 구현, 테스트 작성, 문서화에 활용했습니다. 코드, 테스트, README의 상당 부분은 Claude Code가 작성했습니다.
 
-프로젝트 범위, 요구사항, 평가 기준(evaluator semantics, FAIL vs ERROR 구분 등), 검증 방향(실제 Ollama 검증 여부, 사용할 환경 등), 그리고 결과물의 채택 여부는 프로젝트 작성자가 결정했습니다. Claude Code는 이 결정에 따라 작업했고, 작업 결과는 작성자의 검토를 거쳐 채택되었습니다.
+프로젝트의 범위와 요구사항, 평가 기준(evaluator semantics, FAIL과 ERROR의 구분 등), 검증 방향, 실제 Ollama 검증 여부와 같은 주요 결정은 작성자가 내렸습니다. Claude Code가 생성한 결과는 테스트, 실제 실행 및 동작 확인을 거쳐 프로젝트에 반영했습니다.
 
 ## CI
 

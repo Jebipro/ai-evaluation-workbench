@@ -134,8 +134,21 @@ describe("ProxyProvider error metadata", () => {
 })
 
 describe("Ollama fixture normalizer", () => {
-  it("fixture 출처가 명시되어 있다", () => {
-    expect(typeof fixture._source).toBe("string")
+  it("fixture는 실측 응답이며 출처가 명시되어 있다", () => {
+    expect(fixture._source).toMatch(/^measured: Ollama /)
+    expect(fixture.done).toBe(true)
+  })
+
+  it("buildOllamaChatBody는 fixture를 얻을 때 보낸 실제 요청과 같은 body를 만든다", () => {
+    const [system, user] = fixture._request.messages
+    const body = buildOllamaChatBody({
+      model: fixture._request.model,
+      systemPrompt: system.content,
+      prompt: user.content,
+      temperature: 0,
+      seed: 42,
+    })
+    expect(body).toEqual(fixture._request)
   })
 
   it("message.content → output, prompt_eval_count / eval_count → usage", () => {

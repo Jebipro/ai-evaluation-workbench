@@ -96,8 +96,8 @@ describe("workbench server /api/run", () => {
     const base = await startWorkbench(upstream.url)
     const provider = new ProxyProvider({ serverUrl: base })
     const response = await provider.run({ ...validBody, input: "최고예요" }, { signal: new AbortController().signal })
-    expect(response.output).toBe("positive")
-    expect(response.usage).toEqual({ inputTokens: 26, outputTokens: 298 })
+    expect(response.output).toBe(fixture.message.content)
+    expect(response.usage).toEqual({ inputTokens: fixture.prompt_eval_count, outputTokens: fixture.eval_count })
   })
 
   it("잘못된 request는 400 / http_4xx", async () => {

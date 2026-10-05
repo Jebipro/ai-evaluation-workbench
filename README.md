@@ -7,7 +7,9 @@
 > **Demo mode · 실제 LLM 응답이 아닌 규칙 기반 시뮬레이션입니다.**
 > 기본 provider인 DemoProvider는 LLM이 아닙니다. Demo 결과는 evaluation pipeline 동작을 보여주기 위한 것이며 실제 모델 성능을 의미하지 않습니다.
 
-![A/B Summary](docs/images/ab-summary.jpg)
+![실제 Ollama(qwen2.5:1.5b) run의 A/B Summary](docs/images/ollama-ab-summary.jpg)
+
+*실제 Ollama(`qwen2.5:1.5b`) run. latency와 token usage는 실측값입니다. 결과 해석은 [실제 Ollama 검증 결과](#실제-ollama-검증-결과) 참고.*
 
 ---
 
@@ -186,7 +188,11 @@ browser (React)                         local Node server (server/)        Ollam
 
 ### Ollama 연결
 
-1. Ollama를 설치·실행하고 작은 instruct 모델을 받습니다 (예: `ollama pull llama3.2:1b`). 이 프로젝트는 설치나 다운로드를 자동으로 하지 않습니다.
+1. Ollama를 설치·실행하고 작은 instruct 모델을 받습니다. 이 프로젝트는 설치나 다운로드를 자동으로 하지 않습니다. 검증에 쓴 환경 (Windows):
+   ```bash
+   winget install --id Ollama.Ollama --exact
+   ollama pull qwen2.5:1.5b
+   ```
 2. `npm run server` (환경 변수: `WORKBENCH_SERVER_PORT`=8787, `OLLAMA_BASE_URL`=http://127.0.0.1:11434, `WORKBENCH_UPSTREAM_TIMEOUT_MS`=120000)
 3. `npm run dev` → Provider를 "Ollama"로 바꾸고 "서버 / Ollama 연결 확인"으로 모델을 고른 뒤 Run
 
@@ -194,7 +200,25 @@ browser (React)                         local Node server (server/)        Ollam
 - **usage**: Ollama 응답의 `prompt_eval_count` → `inputTokens`, `eval_count` → `outputTokens`. 필드가 없으면 `undefined` (UI `N/A`).
 - **latency**: 브라우저 Runner가 `performance.now()`로 측정한 **성공한 마지막 attempt**의 요청~응답 시간입니다 (backoff 대기 제외, local server 경유 시간 포함). Ollama가 보고하는 `total_duration` 등은 `raw` metadata에만 보존하고 summary에는 쓰지 않습니다.
 - temperature 0과 고정 seed를 써도 실제 LLM output이 완전히 deterministic하다고 보장되는 것은 아닙니다.
-- `fixtures/ollama-chat-response.json`은 현재 **Ollama 공식 API 문서를 근거로 손으로 작성한 fixture**입니다 (`_source` 필드 참고). 개발 환경에 Ollama가 없어 실측 응답으로 교체하지 못했습니다.
+- `fixtures/ollama-chat-response.json`은 **실측 응답**입니다 (Ollama 0.35.1 / `qwen2.5:1.5b`, `_source`와 실제로 보낸 `_request` 포함). contract test는 이 fixture로 output / usage 정규화를 검증하고, `buildOllamaChatBody`가 `_request`와 같은 body를 만드는지도 확인합니다.
+
+### 실제 Ollama 검증 결과
+
+2026-10-06, Windows 11, Ollama 0.35.1, `qwen2.5:1.5b` (986 MB, `ollama ps` 기준 100% GPU), temperature 0, seed 42, concurrency 3. 경로: browser → local server → Ollama.
+
+| preset | Prompt A | Prompt B | 평균 latency (A / B) | 평균 token (in / out, A · B) |
+|---|---|---|---|---|
+| Classification | 0 / 10 (0%) | 6 / 10 (60%) | 161 ms / 129 ms | 59 / 4 · 69 / 2 |
+| Structured JSON | 0 / 10 (0%) | 0 / 10 (0%) | 845 ms / 874 ms | 83 / 37 · 99 / 42 |
+
+- 20 / 20 실행 모두 실행 오류 없이 끝났습니다(`completed`, attempts 1). output, latency, token usage(`prompt_eval_count` / `eval_count`)가 모든 case에서 수집됐습니다 (coverage 10 / 10).
+- **Classification**: label 목록이 없는 Prompt A는 `好`, `불만`, `atisf리cation`처럼 자유 형식으로 답해 exact-match를 하나도 통과하지 못했습니다. Prompt B는 positive / negative는 맞혔지만 neutral case 4개를 모두 positive / negative로 답했습니다.
+- **Structured JSON**: Prompt B는 field 값 대부분을 맞혔지만 "JSON only" / "다른 텍스트 없이" 지시에도 **10개 모두 ```` ```json ```` fence로 감싸** strict JSON 기준 0점입니다. Prompt A는 일부 case에서 fence 없는 JSON을 냈지만 `location`처럼 요구하지 않은 key를 쓰거나 `city`를 빼서 partial score(0.33 ~ 0.75)에 그쳤습니다. strict 규칙이 실제 downstream 파싱 실패를 드러낸 사례입니다. preset이나 prompt를 결과에 맞춰 고치지 않았습니다.
+- **결정성**: 같은 설정으로 두 번 실행했을 때 Classification은 20 / 20 output이 동일했고, Structured JSON은 **17 / 20만 동일**했습니다 (3건은 fence 유무나 key 이름이 바뀜, 그중 1건은 score 0.75 → 0). 같은 prompt를 직접 순차 5회 보낸 실험에서도 3개 중 2개 prompt가 서로 다른 output 2종을 냈으므로, concurrency만의 문제로 단정할 수 없습니다. **temperature 0 + 고정 seed도 결정성을 보장하지 않는다**는 실측 근거입니다.
+- 실제 경로에서 Cancel도 확인했습니다 ("취소됨 · 4 / 20 완료. 완료된 결과는 보존되었습니다.").
+- 이 수치는 작은 1.5B 모델 하나, 10 cases 규모의 결과이며 모델 일반의 성능을 뜻하지 않습니다.
+
+![실제 Ollama output이 fence 때문에 strict JSON FAIL](docs/images/ollama-json-fence-detail.jpg)
 
 ---
 
@@ -232,7 +256,7 @@ fixtures/          Ollama 응답 fixture
 
 ## Test strategy
 
-`npm test` — Vitest 15 files / 162 tests.
+`npm test` — Vitest 15 files / 163 tests.
 
 - **core** (node 환경): evaluator 각 조건과 normalization, strict JSON(fence FAIL), regex / dataset / template validation(`$&` 포함 input), run status 전이, summary(FAIL vs ERROR 분리, ERROR의 n 포함·latency 제외), runner(concurrency limit, partial failure, retry 성공 / 소진 attempts, non-retryable, backoff 중 abort, timeout vs cancelled, signal을 무시하는 provider, cancel 시 결과 보존과 provider signal abort, stable ordering, snapshot immutability, rendered prompt, latency 기준), DemoProvider(규칙 표, determinism, prompt sensitivity, abort), FaultInjectingProvider(concurrency와 무관한 determinism), provider contract test(Demo, Ollama fixture normalizer + mock fetch, Proxy), preset 기대 결과, export shape
 - **UI** (jsdom + Testing Library, 실제 core runner와 DemoProvider 사용): preset 렌더링, Run → runner 호출, progress / 중복 Run 방지, cancel(provider signal abort + 보존된 결과 + 배너), partiallyFailed와 FAIL / ERROR 구분, case detail의 rendered prompt, Prompt 수정 → 결과 변화, validation 오류 표시, Demo 고지, persistence reload, JSON / CSV export
@@ -242,14 +266,14 @@ fixtures/          Ollama 응답 fixture
 ## Limitations
 
 - **작은 test set에서 70%와 80%의 차이가 통계적으로 유의미하다고 볼 수는 없습니다.** UI는 항상 `pass count / n`을 함께 보여주지만, 유의성 검정은 하지 않습니다.
-- temperature > 0이면 run-to-run variance가 커질 수 있습니다. temperature 0 + seed도 완전한 결정성을 보장하지 않습니다. 반복 실행(repeated trials)은 아직 없습니다.
+- temperature > 0이면 run-to-run variance가 커질 수 있습니다. temperature 0 + seed도 완전한 결정성을 보장하지 않습니다 (실측: Structured JSON 17 / 20만 재현). 반복 실행(repeated trials)은 아직 없습니다.
 - latency는 local machine / 부하 / server 경유 시간의 영향을 받습니다.
 - 서로 다른 모델의 token usage는 tokenizer가 달라 직접 비교에 주의가 필요합니다.
 - **Demo mode의 결과는 simulation이며 실제 모델 성능을 의미하지 않습니다.**
 - 사용자가 작성한 regex의 catastrophic backtracking(ReDoS)은 막지 못합니다 (길이 상한과 flag 제한만 있음). 브라우저 탭이 멈출 수 있습니다.
 - 동일한 rendered prompt를 가진 task가 여러 개면 FaultInjectingProvider의 시도 순번 counter를 공유합니다.
 - Dataset / test case 편집 UI는 없습니다 (preset만). evaluator config는 코드(`presets.ts`)에서 정의합니다.
-- 실제 Ollama 연결은 개발 환경에 Ollama가 없어 **가짜 upstream 서버 테스트로만 검증**했습니다.
+- 실제 Ollama 검증은 모델 1개(`qwen2.5:1.5b`), Windows GPU 환경 1곳에서만 했습니다. 다른 모델 / OS / CPU 환경은 확인하지 않았습니다.
 
 ## 향후 확장 (구현되지 않음)
 

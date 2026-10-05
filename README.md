@@ -1,5 +1,16 @@
 # AI Evaluation Workbench
 
+[![GitHub repo](https://img.shields.io/badge/GitHub-Jebipro%2Fai--evaluation--workbench-181717?logo=github)](https://github.com/Jebipro/ai-evaluation-workbench)
+[![Last commit](https://img.shields.io/github/last-commit/Jebipro/ai-evaluation-workbench)](https://github.com/Jebipro/ai-evaluation-workbench/commits/main)
+[![Top language](https://img.shields.io/github/languages/top/Jebipro/ai-evaluation-workbench)](https://github.com/Jebipro/ai-evaluation-workbench)
+![TypeScript](https://img.shields.io/badge/TypeScript-7-3178C6?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18?logo=vitest&logoColor=white)
+![Ollama](https://img.shields.io/badge/provider-Ollama-000000?logo=ollama&logoColor=white)
+
+**Repository:** https://github.com/Jebipro/ai-evaluation-workbench
+
 > "Prompt A와 Prompt B 중 무엇이 더 좋은가?"를 감이 아니라 **반복 가능한 test set과 deterministic 평가 결과**로 비교하는 작은 도구.
 
 여러 Prompt / 설정(variant)을 같은 Test Dataset에 실행하고, case별 결과와 실패 원인을 나란히 비교합니다. 내부 데이터 모델은 N개의 variant를 지원하고, UI는 A/B 두 variant 비교에 집중합니다.
